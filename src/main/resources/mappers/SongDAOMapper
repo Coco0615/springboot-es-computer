@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!--<mapper namespace="com.pc.dao.SongDAO">
+    <resultMap id="song_res" type="com.pc.entity.Song">
+        <id property="song_id" column="song_id"/>
+        <result property="song_name" column="song_name"/>
+        <result property="issue_date" column="issue_date"/>
+        <result property="song_src" column="song_src"/>
+        <result property="singer_id" column="singer_id"/>
+        <association property="singer" javaType="com.pc.entity.Singer">
+            <id property="singer_id" column="singer_id"/>
+            <result property="singer_name" column="singer_name"/>
+        </association>
+    </resultMap>
+
+</mapper>-->

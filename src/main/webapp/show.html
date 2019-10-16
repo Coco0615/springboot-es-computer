@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+    <script src="layui/layui.js"></script>
+    <style>
+        em{
+            font-style: normal;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<!--===========主页面  start===================-->
+<div class="layui-container">
+    <div class="layui-row">
+        <div style="height: 100px"></div>
+        <div class="layui-col-md12">
+            <div class="demoTable">
+                诗名：
+                <div class="layui-inline">
+                    <input class="layui-input" name="name" id="searchName" autocomplete="off">
+                </div>
+                <button id="search" class="layui-btn" data-type="reload">搜索</button>
+            </div>
+            <table id="computerTable" lay-filter="computerfilter"></table>
+<!--===========主页面  end===================-->
+<!--=================弹框表单 start=================-->
+<form class="layui-form" id="computerForm" lay-filter="computerForm" style="display: none">
+    <div class="layui-form-item" >
+        <input type="hidden" name="computer_id"/>
+        <label class="layui-form-label">电脑名</label>
+        <div class="layui-input-inline">
+            <input type="text" name="computer_name" required  lay-verify="required" placeholder="请输入电脑名" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item" >
+        <label class="layui-form-label">电脑价格</label>
+        <div class="layui-input-inline">
+            <input type="text" name="computer_price"  required  lay-verify="required" placeholder="请输入文本" class="layui-input"/>
+        </div>
+    </div>
+    <div class="layui-form-item" >
+        <label class="layui-form-label">图片</label>
+        <div class="layui-input-inline">
+            <input type="hidden" name="computer_img"/>
+            <button type="button" class="layui-btn" id="test1">
+                <i class="layui-icon">&#xe67c;</i>上传图片
+            </button>
+        </div>
+    </div>
+    <div class="layui-form-item" >
+        <label class="layui-form-label">品牌</label>
+        <div class="layui-input-inline">
+            <!--<input type="text" name="brand_id"  required  lay-verify="required" placeholder="请输入文本" class="layui-input"></input>-->
+            <select id="sel" name="brand_id">
+
+            </select>
+        </div>
+    </div>
+
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="add" id="update">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<!--=================弹框表单 end=================-->
+
+<!--==============删除、修改工具栏  start================-->
+<script type="text/html" id="du">
+    <a lay-event="delete" class="layui-btn layui-btn-danger layui-btn-xs">删除</a>
+    <a lay-event="update" class="layui-btn layui-btn-xs">修改</a>
+</script>
+<!--==============删除、修改工具栏  end================-->
+<!--==============表头工具栏  start=================-->
+<script type="text/html" id="ad">
+    <a lay-event="add" class="layui-btn layui-btn-sm">添加</a>
+    <a lay-event="deleteMany" class="layui-btn layui-btn-danger layui-btn-sm">批量删除</a>
+</script>
+<!--==============表头工具栏  end=================-->
+<script type="text/html" id="img">
+<img src="/computer/{{d.computer_img}}"/>
+</script>
+<script type="text/html" id="br">
+{{d.brand.brand_name}}
+</script>
+
+<!--=============展示 start===============-->
+<script type="text/javascript">
+    layui.use(['table','layer','form','laydate','upload'],function () {
+        var table = layui.table;
+        var form = layui.form;
+        var upload = layui.upload;
+        var $ = layui.$;
+
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#test1' //绑定元素
+            ,url: 'computer/upload' //上传接口
+            ,done: function(res){
+               $("input[name=computer_img]").attr("value",res.data);
+            }
+        });
+        $.ajax({
+            url:'brand/select',
+            type:'post',
+            dataType:'json',
+            success:function (r) {
+                var s='';
+                $.each(r,function (i,v) {
+                    s += "<option value='"+v.brand_id+"'>"+v.brand_name+"</option>";
+                })
+                $("#sel").append(s);
+                form.render();
+            }
+        })
+        table.render({
+            elem:'#computerTable',
+            url:'computer/select',
+            page:true,
+            width:1200,
+            limit:10,
+            limits:[10,20,30],
+            toolbar:'#ad',
+            cols:[[
+                {type:'checkbox',width:50},
+                {title:"编号",field:"computer_id"},
+                {title:"电脑名",field:"computer_name"},
+                {title:"价格",field:"computer_price"},
+                {title:"图片",field:"computer_img",templet:"#img"},
+                {title:"品牌",field:"brand_id",templet:"#br"},
+                {title:"操作",toolbar:"#du"}
+            ]]
+
+        })
+        //<!--=============展示 end===============-->
+        //---------------模糊查询 start------------------
+        $("#search").click(function () {
+            table.reload('computerTable',{
+                where:{
+                    name:$("#searchName").val()
+                },
+                page:{
+                    curr:1
+                }
+            })
+        })
+        //---------------模糊查询 end------------------
+        //-------------右侧工具条 start---------------------
+        table.on('tool(computerfilter)',function (obj) {
+            //console.log(obj.event)
+            //console.log(obj.data)
+            if(obj.event == 'delete'){
+                layer.confirm("确定删除吗？",function (i) {
+                    $.ajax({
+                        url:'computer/delete',
+                        data:"ids="+obj.data.computer_id,
+                        type:'post',
+                        dataType:'json',
+                        success:function (e) {
+                            if(e.delete){
+                                layer.msg("删除成功");
+                                table.reload('computerTable');
+                            }else {
+                                layer.msg("删除失败");
+                            }
+                            layer.close(i);
+                        }
+                    })
+                })
+
+            }else if(obj.event == 'update'){
+                $("#update").attr("lay-filter","update");
+                $.ajax({
+                    url:'computer/selectOne',
+                    data:'id='+obj.data.computer_id,
+                    type:'post',
+                    dataType:'json',
+                    success:function (e) {
+                        console.log(e)
+                        form.val("computerForm", { //formTest 即 class="layui-form" 所在元素属性 lay-filter="" 对应的值
+                            "computer_id":e.computer_id,
+                            "computer_name": e.computer_name, // "name": "value"
+                            "computer_price":e.computer_price,
+                            "computer_img":e.computer_img,
+                            "brand_id":e.brand_id
+                        });
+                    }
+                })
+
+                layer.open({
+                    type:1,
+                    content:$("#computerForm"),
+                    title:'修改',
+                    area: ['500px', '400px']
+                })
+                console.log(222222222222)
+            }
+        })
+        //-------------右侧工具条 end---------------------
+        //-------------上方工具条 start-------------------
+        table.on('toolbar(computerfilter)',function (obj) {
+            if(obj.event == 'deleteMany'){
+                var checkStatus = table.checkStatus(obj.config.id);
+                var data = checkStatus.data;
+                var arr = [];
+                $(data).each(function (i,o) {
+                    arr[i] = o.computer_id;
+                })
+                console.log(arr);
+                $.ajax({
+                    url:'computer/delete',
+                    data:"ids="+arr,
+                    type:'post',
+                    dataType:'json',
+                    success:function (e) {
+                        if(e.delete){
+                            layer.msg("删除成功");
+                            table.reload('computerTable');
+                        }else {
+                            layer.msg("删除失败");
+                        }
+                    }
+                })
+            }else if(obj.event == 'add'){
+                $("#update").attr("lay-filter","add");
+                layer.open({
+                    type:1,
+                    content:$("#computerForm"),
+                    title:'添加',
+                    area: ['500px', '400px']
+                })
+            }
+        })
+        //-------------上方工具条 end-------------------
+        //------------给修改按钮绑定时间  start--------------------
+        form.on('submit(update)',function () {
+            //console.log($("#computerForm").serialize())
+            console.log(2222222222)
+            $.ajax({
+                url:"computer/add",
+                data:$("#computerForm").serialize(),
+                type:'post',
+                dataType:'json',
+                success:function (e) {
+                    if(e.add) {
+                        table.reload('computerTable');
+                        layer.closeAll();
+                        $("input[name=computer_id]").prop("value","");
+                        $("input[name=computer_name]").prop("value","");
+                        $("input[name=computer_price]").prop("value","");
+                        $("input[name=computer_img]").prop("value","");
+                        layer.msg('修改成功！')
+                    }else {
+                        layer.closeAll();
+                        layer.msg("修改失败！");
+                    }
+                }
+            })
+            return false;
+        })
+        //------------给修改按钮绑定时间  end--------------------
+        //------------给添加按钮绑定时间  start--------------------
+        form.on('submit(add)',function () {
+            console.log(1111111111)
+            console.log($("#computerForm").serialize())
+            $.ajax({
+                url:'computer/add',
+                type:'post',
+                data:$("#computerForm").serialize(),
+                dataType:'json',
+                success:function (e) {
+                    if(e.add) {
+                        table.reload('computerTable');
+                        layer.closeAll();
+                        $("input[name=title]").prop("value","");
+                        $("input[name=content]").prop("value","");
+                        layer.msg('添加成功！')
+                    }else {
+                        layer.closeAll();
+                        layer.msg("添加失败！");
+                    }
+                }
+            })
+            return false;
+        })
+        //------------给添加按钮绑定时间  end--------------------
+
+    })
+</script>
+
+
+
+</body>
+</html>
